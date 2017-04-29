@@ -15,4 +15,9 @@ public class SqlController {
         model.addAttribute("name", name);
         return "add_sql";
     }
+
+    @RequestMapping("/sql/mixQuery")
+    public String mixQuery(){
+        return "mix_query";
+    }
 }

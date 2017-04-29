@@ -22,4 +22,9 @@ public class CommonController {
     public String statistics(Model model) {
         return "statistics";
     }
+
+    @RequestMapping("/index")
+    public String index(Model model) {
+        return "index";
+    }
 }
