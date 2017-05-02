@@ -11,16 +11,17 @@ public class TestSqlParser {
     @Test
     public void testStr(){
         SqlParser sqlParser = new SqlParser();
-        String sql = "select * from table1 where {user_name='$name'} and {password=$pass} group by {$abc} , {$abb} order by {$aby}, aa";
+        String sql = "select * from table1 where {user_name='$name'} {and password=$pass} group by {$abc} {, $abb} order by {$aby} desc, aa";
+        sql = "select * from user where id<>{$id} ";
         //如果 name 为空清空括号内
         String name = "";
         String name_key = "$name";
         HashMap hm = new HashMap();
-        hm.put("$name", "cda");
-        hm.put("$pass", "tre");
-        hm.put("$abc", "a");
-        hm.put("$abb", "fds");
-        hm.put("$aby", "fdas");
+        hm.put("$id", "1");
+        hm.put("$pass", "");
+        hm.put("$abc", "dd");
+        hm.put("$abb", "");
+        hm.put("$aby", "");
         sql = sqlParser.syntaxParser(sql, hm);
         System.out.println(sql);
 

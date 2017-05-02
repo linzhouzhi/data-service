@@ -87,7 +87,7 @@
             <div class="panel-body">
                 <div class="form-group" id="add-schema-div">
                     <label>schemas</label>
-                    <div class="form-group param-item">
+                    <div class="form-group param-item schema-form">
                         <div class="form-group">
                             <div class="form-group" style="width: 39%; float: left">
                                 <input type="text" name="host" class="form-control" placeholder="host" />
@@ -155,7 +155,7 @@
                 <div class="clearfix"></div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-default sql-button"> 预览 </button>
-                    <button type="submit" class="btn btn-primary sql-button"> 运行 </button>
+                    <button type="submit" class="btn btn-primary sql-button" id="sql-run"> 运行 </button>
                 </div>
             </div>
         </div><!-- .panel -->
@@ -167,7 +167,7 @@
 <script src="../../vender/jquery-highlighttextarea/jquery.highlighttextarea.js"></script>
 <script>
     /*<![CDATA[*/
-    var schema_tpl='<div class="form-group param-item">' +
+    var schema_tpl='<div class="form-group param-item schema-form">' +
             '<div class="form-group">' +
             '<div class="form-group" style="width: 39%; float: left">' +
             '<input type="text" name="host" class="form-control" placeholder="host" />' +
@@ -202,25 +202,25 @@
             '</div>';
 
     var join_tpl='<div class="clearfix"></div>' +
-            '<div class="form-group param-item">' +
+            '<div class="form-group param-item join-form">' +
             '<div class="form-group left-label">' +
             '<label>ON:</label>' +
             '</div>' +
             '<div class="param_black_div"></div>' +
             '<div class="form-group pull-left" style="width: 36%;">' +
-            '<input type="text" name="username" class="form-control" placeholder="username" />' +
+            '<input type="text" name="left_column" class="form-control" placeholder="left column" />' +
             '</div>' +
             '<div class="param_black_div"> <label> = </label></div>' +
             '<div class="form-group pull-left" style="width: 36%;">' +
-            '<input type="text" name="password" class="form-control" placeholder="password" />' +
+            '<input type="text" name="right_column" class="form-control" placeholder="right column" />' +
             '</div>' +
             '<div class="param_black_div"></div>' +
             '<div class="form-group pull-left" style="width: 8%;">' +
-            '<select class="form-control">' +
-            '<option value="">left join</option>' +
-            '<option value="">right join</option>' +
-            '<option value="">inner join</option>' +
-            '<option value="">outer join</option>' +
+            '<select class="form-control join">' +
+            '<option value="left">left join</option>' +
+            '<option value="right">right join</option>' +
+            '<option value="inner">inner join</option>' +
+            '<option value="outer">outer join</option>' +
             '</select>' +
             '</div>' +
             '<div class="param_black_div"></div>' +
@@ -234,15 +234,15 @@
             '<div class="form-group left-label"><label>Group:</label></div>' +
             '<div class="param_black_div"></div>' +
             '<div class="form-group pull-left" style="width: 64%;">' +
-            '<input type="text" name="host" class="form-control" placeholder="host" />' +
+            '<input type="text" name="group_column" class="form-control" placeholder="group-column" />' +
             '</div>' +
             '<div class="param_black_div"></div>' +
             '<div class="form-group pull-left" style="width: 18%;">' +
             '<label class="radio-inline">' +
-            '<input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2" />count' +
+            '<input type="radio" name="count_type" checked="checked" value="count" />count' +
             '</label>' +
             '<label class="radio-inline">' +
-            '<input type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option3" />distinct' +
+            '<input type="radio" name="count_type" value="distinct" />distinct' +
             '</label>' +
             '</div>' +
             '<div class="param_black_div"></div>' +
@@ -278,23 +278,67 @@
             var tpl = "";
             switch ( type ){
                 case 'order':
-                    tpl = condition_tpl( "Order" );
+                    if( !check_exist("condition", "order") ){
+                        tpl = condition_tpl( "Order", "order", "id desc, name asc" );
+                    }
                     break;
                 case 'limit':
-                    tpl = condition_tpl( "Limit" );
+                    if( !check_exist("condition", "limit") ){
+                        tpl = condition_tpl( "Limit", "limit", "50" );
+                    }
                     break;
                 default:
-                    tpl = condition_tpl( "Where" );
+                    if( !check_exist("condition", "where") ){
+                        tpl = condition_tpl( "Where", "where", "id > 100" );
+                    }
                     break;
             }
             $("#condition").append(tpl);
         });
         $("#group-by-condition").click(function () {
-            $("#condition").append(group_by_tpl);
+            if( !check_exist("condition", "group_column") ){
+                $("#condition").append(group_by_tpl);
+            }
         });
         // 删除参数
         $(document).on('click', '.param-rm', function(){
             $(this).parents('.param-item').remove();
+        });
+        
+        $("#sql-run").click(function () {
+            var data = {};
+            var schema_list = [];
+            $(".schema-form").each(function () {
+                var schema = {};
+                schema.host = $(this).find("input[name='host']").val();
+                schema.username = $(this).find("input[name='username']").val();
+                schema.sql = $(this).find(".sql-textarea").val();
+                schema_list.push(schema);
+            });
+            var join_list = [];
+            $(".join-form").each(function () {
+                var join = {};
+                join.left = $(this).find("input[name='left_column']").val();
+                join.right = $(this).find("input[name='right_column']").val();
+                join.type = $(this).find("select.join").val();
+                join_list.push(join);
+            });
+            var where = $("input[name='where']").val();
+            var group = {}
+            group.group_column = $("input[name='group_column']").val();
+            group.count_type = $("input[name='count_type']:checked").val();
+            var order = $("input[name='order']").val();
+            var limit = $("input[name='limit']").val();
+
+            data.schema = schema_list;
+            data.join = join_list;
+            data.group = group;
+            data.where = where;
+            data.order = order;
+            data.limit = limit;
+
+            console.log( JSON.stringify(data) );
+
         });
     });
 
@@ -313,14 +357,23 @@
         });
     }
 
+    // 通过 input name 检查控件是否存在
+    function check_exist(parent_id, name) {
+        var obj = $('#' + parent_id ).find("input[name='" + name + "']");
+        if( obj.length > 0 ){
+            return true;
+        }
+        return false;
+    }
+
     // 简单的条件参数模版
-    function condition_tpl(type) {
+    function condition_tpl(type, name, content) {
         var tpl='<div class="clearfix"></div>' +
                 '<div class="form-group param-item">'+
                 '<div class="form-group left-label"><label>' + type + ':</label></div>'+
                 '<div class="param_black_div"></div>'+
                 '<div class="sql_param_key_div form-group" style="width:84%">'+
-                '<input type="text" class="form-control" placeholder="key">'+
+                '<input type="text" name="' + name + '" class="form-control" placeholder="' + content + '">'+
                 '</div>'+
                 '<div class="param_black_div"></div>'+
                 '<div class="form-group right-button">'+

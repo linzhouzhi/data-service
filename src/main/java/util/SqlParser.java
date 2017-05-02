@@ -30,9 +30,15 @@ public class SqlParser {
 
         ArrayList<String> whereRight = new ArrayList();
         whereRight.add( "and" );
+        whereRight.add( "group" );
+        whereRight.add( "by" );
+        whereRight.add( "order" );
+        whereRight.add( "limit" );
         SQL_SYNTAX_RIGHT.put("where", whereRight );
 
         ArrayList<String> byRight = new ArrayList();
+        byRight.add("desc");
+        byRight.add("asc");
         byRight.add(",");
         SQL_SYNTAX_RIGHT.put("by", byRight);
 
@@ -51,6 +57,7 @@ public class SqlParser {
 
 
     public String syntaxParser(String sql, HashMap<String, String> hm){
+        System.out.println(sql);
         sql = sql.toLowerCase();
         // 先进行参数的语法解析
         Iterator iter = hm.entrySet().iterator();
@@ -62,8 +69,7 @@ public class SqlParser {
         }
         // sql 语法规范解析
         System.out.println(sql);
-        sql = sqlSyntaxRight(sql, SQL_SYNTAX_RIGHT);
-        sql = sqlSyntaxLeft(sql, SQL_SYNTAX_LEFT);
+        //sql = sqlSyntaxRight(sql, SQL_SYNTAX_RIGHT);
         // sql 去除非法结尾
         sql = removeTailTag(sql, TAIL_TAGS);
         return sql;
@@ -119,6 +125,35 @@ public class SqlParser {
             List<String> valueList = (List<String>) entry.getValue();
             for( int i = 0; i < valueList.size(); i++ ){
                 String value = valueList.get(i);
+                String left = leftStr( sql, key ).trim();
+                String right = rightStr( sql, key ).trim();
+                if( value.length() > right.length() ){
+                    break;
+                }
+                String tag = right.substring(0, value.length()).trim();
+                if( tag.equals(value) ){
+                    right = right.substring( tag.length() );
+                    sql = left + " " + key + right;
+                }
+            }
+        }
+        return sql;
+    }
+
+    /**
+     * sql 标准语法规范右边的比如 where 右边不能有 and
+     * @param sql
+     * @param sqlSyntax
+     * @return
+     */
+    private String sqlSyntaxRight2(String sql, HashMap<String, List<String>> sqlSyntax) {
+        Iterator iter = sqlSyntax.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry entry = (Entry) iter.next();
+            String key = (String) entry.getKey();
+            List<String> valueList = (List<String>) entry.getValue();
+            for( int i = 0; i < valueList.size(); i++ ){
+                String value = valueList.get(i);
                 String left = leftStr(sql, key).trim();
                 if( left.equals( sql ) ){
                     return left;
@@ -153,19 +188,24 @@ public class SqlParser {
      * @return
      */
     public String parser( String sql, String field, String value ){
-        if( value == null ){
+        if( value == null || sql.indexOf( field.substring(1) ) < 0 ){
             return sql;
         }
         String leftStr = leftStr(sql, field);
         int leftIndex = leftStr.lastIndexOf( LEFT_TAG );
+        if( leftIndex < 0 ){
+            return leftStr;
+        }
         String rightStr = rightStr(sql, field);
         int rightIndex = rightStr.indexOf( RIGHT_TAG);
-
-        if( value.length() > 0 ){
+        if( rightIndex < 0 ){
+            return rightStr;
+        }
+        if( value.length() > 0 ){ //值不为空那么就拼接起来
             leftStr = removeLastSubStr(leftStr, LEFT_TAG);
             rightStr = removeStartSubStr(rightStr, RIGHT_TAG);
             return leftStr + value + rightStr;
-        }else{
+        }else{ // 为空那么就去掉括号的内容
             leftStr = leftStr.substring(0, leftIndex);
             rightStr = rightStr.substring( rightIndex + 1, rightStr.length() );
             return leftStr + rightStr;
