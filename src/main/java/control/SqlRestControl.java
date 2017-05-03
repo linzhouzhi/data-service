@@ -24,6 +24,15 @@ public class SqlRestControl {
         return res;
     }
 
+    @RequestMapping(value = "/sql/test_jdbc_ajax", method = RequestMethod.POST)
+    public JSONObject addTestJdbcAjax(@RequestBody JSONObject requestBody){
+        SqlLogic sqlLogic = new SqlLogic();
+        HashMap res = sqlLogic.testJdbc(requestBody);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("result", res);
+        return jsonObject;
+    }
+
     @RequestMapping(value="/sql/run_by_id", method = RequestMethod.POST)
     public JSONObject RunById(@RequestBody JSONObject requestBody){
         SqlLogic sqlLogic = new SqlLogic();

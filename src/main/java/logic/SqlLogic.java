@@ -171,4 +171,10 @@ public class SqlLogic {
         List res = sql.dateGroupHistory();
         return res;
     }
+
+    public HashMap testJdbc(JSONObject requestBody) {
+        HashMap hm = new HashMap();
+        hm.put("error_code", 0);
+        return hm;
+    }
 }
